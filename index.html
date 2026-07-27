@@ -102,7 +102,7 @@ body.ready .stage *{animation-play-state:running}
 header{text-align:center; width:100%}
 
 .eyebrow{
-  font-size:clamp(10px,2.7vw,12px);
+  font-size:clamp(11.5px,3.1vw,14px);
   letter-spacing:.42em; text-transform:uppercase;
   font-weight:500; color:var(--ink-dim); text-indent:.42em;
   margin-bottom:1.5em;
@@ -198,9 +198,92 @@ footer{text-align:center; width:100%; margin-top:clamp(2px,.8vh,8px)}
   opacity:0; animation:rise 1.1s 4.5s cubic-bezier(.22,1,.36,1) forwards;
 }
 .date{
-  margin-top:.5em; font-size:clamp(15px,4.4vw,19px);
+  margin-top:.5em; font-size:clamp(17px,5vw,21.5px);
   letter-spacing:.3em; text-indent:.3em; color:var(--ink);
   opacity:0; animation:rise 1.1s 4.72s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+/* =========================== PORTADA: FLASH ===========================
+   Un número por vez, como cuenta una cabina de verdad, y la luz de
+   aviso que parpadea al ritmo. El fogonazo tapa el corte: la máquina
+   ya está abajo cuando el blanco se disuelve. */
+.intro{
+  position:fixed; inset:0; z-index:80;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(20px,4vh,34px); padding:24px; text-align:center;
+  background:#08080A;
+  opacity:0; transition:opacity .6s ease;
+}
+.intro.visible{opacity:1}
+.intro.gone{opacity:0; pointer-events:none}
+.intro .eyebrow{margin:0; animation:none; opacity:1}
+.intro small{
+  display:block; font-size:11.5px; letter-spacing:.32em; text-indent:.32em;
+  text-transform:uppercase; color:rgba(255,255,255,.55);
+}
+
+/* la luz de aviso */
+.lamp{
+  width:9px; height:9px; border-radius:50%;
+  background:#5A1418; box-shadow:inset 0 1px 2px rgba(0,0,0,.6);
+}
+.intro.opening .lamp{animation:lamp .58s 3 ease-in-out}
+@keyframes lamp{
+  0%,100%{background:#5A1418; box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+  45%    {background:#FF5A4E; box-shadow:0 0 16px 3px rgba(255,90,78,.75)}
+}
+
+/* la cuenta regresiva: un número por vez, en el mismo lugar */
+.count{
+  position:relative; display:grid; place-items:center;
+  width:1.5em; height:1.3em; border:0; background:none; padding:0;
+  cursor:pointer;
+  font-family:"Cormorant Garamond",serif; font-weight:300;
+  font-size:clamp(52px,15vw,76px); line-height:1;
+  color:#fff;
+}
+.count:focus-visible{outline:2px solid #fff; outline-offset:12px}
+.count span{grid-area:1/1; opacity:0}
+.count span:first-child{opacity:.2}
+.intro.opening .count span{animation:numpop .58s ease forwards}
+.intro.opening .count span:nth-child(2){animation-delay:.58s}
+.intro.opening .count span:nth-child(3){animation-delay:1.16s}
+@keyframes numpop{
+  0%  {opacity:0; transform:scale(1.55)}
+  20% {opacity:1; transform:scale(1)}
+  76% {opacity:1; transform:scale(1)}
+  100%{opacity:0; transform:scale(.88)}
+}
+
+/* el fogonazo */
+.flashfx{
+  position:absolute; inset:0; z-index:9; opacity:0; pointer-events:none;
+  background:radial-gradient(75% 65% at 50% 45%, #FFFFFF 0%, #FFFFFF 55%, #FFF4E6 100%);
+}
+.intro.opening .flashfx{animation:blast 1.05s 1.74s ease-out forwards}
+@keyframes blast{
+  0%  {opacity:0}
+  5%  {opacity:1}
+  16% {opacity:1}
+  100%{opacity:0}
+}
+
+/* el fondo se abre justo en el fogonazo: abajo ya está la máquina */
+.intro.opening{animation:bg-clear .01s 1.76s forwards}
+@keyframes bg-clear{ to{background:transparent} }
+.intro.opening small{animation:fade-out .35s ease forwards}
+@keyframes fade-out{ to{opacity:0} }
+
+/* Un fogonazo blanco a pantalla completa no es inocuo para quien tiene
+   fotosensibilidad. Con movimiento reducido, la luz sube suave. */
+@keyframes blast-suave{
+  0%  {opacity:0}
+  35% {opacity:.32}
+  100%{opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .intro.opening .flashfx{animation:blast-suave 1.05s 1.74s ease-out forwards}
+  .intro.opening .lamp{animation:none}
 }
 
 @keyframes rise{ from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)} }
@@ -230,6 +313,16 @@ footer{text-align:center; width:100%; margin-top:clamp(2px,.8vh,8px)}
 
 <audio id="song" src="cancion.mp3" loop preload="metadata"></audio>
 
+<div class="intro" id="intro">
+  <p class="eyebrow">Nos casamos</p>
+  <span class="lamp"></span>
+  <button class="count" id="startBtn" type="button" aria-label="Empezar">
+    <span>3</span><span>2</span><span>1</span>
+  </button>
+  <small>Tocá para la foto</small>
+  <span class="flashfx"></span>
+</div>
+
 <main class="stage">
 
   <header>
@@ -257,18 +350,25 @@ footer{text-align:center; width:100%; margin-top:clamp(2px,.8vh,8px)}
 </main>
 
 <script>
-/* Arranca recién cuando las fuentes están listas: sin flash ni frames raros. */
-const start = () => document.body.classList.add('ready');
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(start);
-  setTimeout(start, 1600);
-} else { start(); }
+/* =========================================================
+   Todo arranca con el toque en la portada. No es un rodeo:
+   los navegadores no dejan sonar audio sin un gesto de la
+   persona, así que ese gesto es parte de la pieza.
 
-/* ---- música ----
-   Los navegadores bloquean el audio con sonido hasta que la persona
-   toca la pantalla, así que: intentamos arrancar, y si nos frenan,
-   arrancamos con el primer toque en cualquier lado. */
-const song = document.getElementById('song');
+   La portada tiene dos momentos, y no coinciden:
+     1790ms → aparece la máquina, con el blanco todavía a pleno
+     2900ms → se retira la portada, ya invisible
+   ========================================================= */
+const intro = document.getElementById('intro');
+const btn   = document.getElementById('startBtn');
+const song  = document.getElementById('song');
+
+/* La portada aparece cuando cargaron las fuentes: sin flash de tipografía */
+const showIntro = () => intro.classList.add('visible');
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(showIntro);
+  setTimeout(showIntro, 1600);
+} else { showIntro(); }
 
 const fadeIn = () => {
   song.volume = 0;
@@ -280,17 +380,22 @@ const fadeIn = () => {
   }, 70);
 };
 
-const play = () => song.play().then(() => { fadeIn(); return true; }).catch(() => false);
+let abierto = false;
+const abrir = () => {
+  if (abierto) return;
+  abierto = true;
 
-const armOnGesture = () => {
-  const once = () => {
-    play();
-    ['pointerdown','keydown','touchstart'].forEach(e => window.removeEventListener(e, once));
-  };
-  ['pointerdown','keydown','touchstart'].forEach(e => window.addEventListener(e, once, {once:true}));
+  /* La música arranca acá adentro, en el gesto mismo:
+     afuera de este handler el navegador la bloquea. */
+  song.play().then(fadeIn).catch(() => {});
+
+  intro.classList.add('opening');
+  setTimeout(() => document.body.classList.add('ready'), 1790);
+  setTimeout(() => intro.classList.add('gone'), 2900);
+  setTimeout(() => intro.remove(), 3600);
 };
 
-play().then(ok => { if (!ok) armOnGesture(); });
+btn.addEventListener('click', abrir);
 </script>
 
 </body>
