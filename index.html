@@ -166,8 +166,8 @@ header{text-align:center; width:100%}
   background:var(--paper);
   box-shadow:0 10px 26px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.5);
   animation:
-    feed var(--feed) .62s cubic-bezier(.34,1,.64,1) forwards,
-    sway 3.4s calc(.62s + var(--feed)) ease-in-out 2;
+    feed var(--feed) var(--feed-delay) cubic-bezier(.34,1,.64,1) forwards,
+    sway 3.4s calc(var(--feed-delay) + var(--feed)) ease-in-out 2;
 }
 .strip::after{
   content:""; position:absolute; inset:0; pointer-events:none;
@@ -195,12 +195,12 @@ footer{text-align:center; width:100%; margin-top:clamp(2px,.8vh,8px)}
   font-size:clamp(36px,10.5vw,50px); line-height:1.05; font-weight:400;
   color:var(--ink);
   text-shadow:0 1px 0 var(--emboss), 0 10px 24px rgba(0,0,0,.55);
-  opacity:0; animation:rise 1.1s 4.5s cubic-bezier(.22,1,.36,1) forwards;
+  opacity:0; animation:rise 1.1s 5.9s cubic-bezier(.22,1,.36,1) forwards;
 }
 .date{
   margin-top:.5em; font-size:clamp(17px,5vw,21.5px);
   letter-spacing:.3em; text-indent:.3em; color:var(--ink);
-  opacity:0; animation:rise 1.1s 4.72s cubic-bezier(.22,1,.36,1) forwards;
+  opacity:0; animation:rise 1.1s 6.12s cubic-bezier(.22,1,.36,1) forwards;
 }
 
 /* =========================== PORTADA: FLASH ===========================
@@ -216,7 +216,6 @@ footer{text-align:center; width:100%; margin-top:clamp(2px,.8vh,8px)}
 }
 .intro.visible{opacity:1}
 .intro.gone{opacity:0; pointer-events:none}
-.intro .eyebrow{margin:0; animation:none; opacity:1}
 .intro small{
   display:block; font-size:11.5px; letter-spacing:.32em; text-indent:.32em;
   text-transform:uppercase; color:rgba(255,255,255,.55);
@@ -227,7 +226,7 @@ footer{text-align:center; width:100%; margin-top:clamp(2px,.8vh,8px)}
   width:9px; height:9px; border-radius:50%;
   background:#5A1418; box-shadow:inset 0 1px 2px rgba(0,0,0,.6);
 }
-.intro.opening .lamp{animation:lamp .58s 3 ease-in-out}
+.intro.opening .lamp{animation:lamp .58s 3 ease-in-out, fade-out .16s 1.7s forwards}
 @keyframes lamp{
   0%,100%{background:#5A1418; box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
   45%    {background:#FF5A4E; box-shadow:0 0 16px 3px rgba(255,90,78,.75)}
@@ -314,7 +313,6 @@ footer{text-align:center; width:100%; margin-top:clamp(2px,.8vh,8px)}
 <audio id="song" src="cancion.mp3" loop preload="metadata"></audio>
 
 <div class="intro" id="intro">
-  <p class="eyebrow">Nos casamos</p>
   <span class="lamp"></span>
   <button class="count" id="startBtn" type="button" aria-label="Empezar">
     <span>3</span><span>2</span><span>1</span>
